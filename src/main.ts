@@ -45,6 +45,10 @@ const handleContext = async (context: Context) => {
         ...context,
     }
 
+    const publicAgent = new atprotoApi.Agent('https://public.api.bsky.app')
+
+    window.context.publicAgent = publicAgent
+
     const pds = context.pds
 
     if (!pds || typeof pds !== 'string') {
