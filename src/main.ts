@@ -2,7 +2,6 @@ import * as atprotoApi from '@atproto/api'
 import type { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
 
 const isScriptNode = (node: Element): node is HTMLScriptElement => node.tagName === 'SCRIPT'
-const isStyleNode = (node: Element): node is HTMLStyleElement => node.tagName === 'STYLE'
 const cloneScriptNode = (node: HTMLScriptElement) => {
     const script = document.createElement('script')
 
@@ -16,10 +15,7 @@ const cloneScriptNode = (node: HTMLScriptElement) => {
 }
 const parseNodes = (node: Element) => {
     if (isScriptNode(node)) {
-        node.innerHTML = node.innerHTML.replace(/<br>/g, '\n')
         node.parentNode?.replaceChild(cloneScriptNode(node), node)
-    } else if (isStyleNode(node)) {
-        node.innerHTML = node.innerHTML.replace(/<br>/g, '\n')
     } else {
         Array.from(node.children).forEach((child) => {
             parseNodes(child)
@@ -37,7 +33,6 @@ declare global {
         context: Context
     }
 }
-const newlinesToLinebreaks = (html: string) => html.replace(/(?:\r\n|\r|\n)/g, '<br>')
 
 const handleContext = async (context: Context) => {
     window.context = {
@@ -97,17 +92,17 @@ const handleContext = async (context: Context) => {
 }
 
 const handleContent = (content: string) => {
-    const $content = document.querySelector('#content')
+    const $content = document.querySelector<HTMLDivElement>('#content')
 
     if (!$content) {
         return
     }
 
-    const transforms: Array<[boolean, (html: string) => string]> = [
-        [Boolean(window.context.newlinesToLinebreaks), newlinesToLinebreaks],
-    ]
+    if (window.context.newlinesToLinebreaks) {
+        $content.style.whiteSpaceCollapse = 'preserve-breaks'
+    }
 
-    $content.innerHTML = transforms.reduce((html, [condition, func]) => (condition ? func(html) : html), content)
+    $content.innerHTML = content
 
     Array.from($content.querySelectorAll('a')).forEach((a) => {
         if (/^#/.test(a.getAttribute('href') || '')) {
